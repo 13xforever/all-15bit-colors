@@ -1,0 +1,13 @@
+﻿<Window x:Class="AllColors.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AllColors"
+        mc:Ignorable="d"
+		Name="window1"
+        Title="All 15-bit colors" Height="200" Width="300" ResizeMode="NoResize" Loaded="window1_Loaded" MouseDown="image1_Generate" Closing="window1_Closing">
+	<Grid Name="grid1">
+		<Image HorizontalAlignment="Left" Height="128" VerticalAlignment="Top" Width="256" Name="image1"/>
+	</Grid>
+</Window>
