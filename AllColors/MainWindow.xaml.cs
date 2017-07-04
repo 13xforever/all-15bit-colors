@@ -30,6 +30,15 @@ namespace AllColors
 			var heightRatio = window1.ActualHeight / window1.Height;
 			window1.Width = (image1.Width + borderWidth) / widthRatio;
 			window1.Height = (image1.Height + borderHeight) /heightRatio;
+
+			var widthScaleFactor = (int)((SystemParameters.FullPrimaryScreenWidth - borderWidth) / image1.Width);
+			var heightScaleFactor = (int)((SystemParameters.FullPrimaryScreenHeight - borderHeight) / image1.Height);
+			var scaleFactor = Math.Min(widthScaleFactor, heightScaleFactor);
+			window1.Width = (image1.Width * scaleFactor + borderWidth) / widthRatio;
+			window1.Height = (image1.Height * scaleFactor + borderHeight) / heightRatio;
+			window1.Left = (SystemParameters.FullPrimaryScreenWidth - window1.Width) / 2;
+			window1.Top = (SystemParameters.FullPrimaryScreenHeight - window1.Height) / 2;
+			image1.RenderTransform = new ScaleTransform(scaleFactor, scaleFactor);
 		}
 
 		private void image1_Generate(object sender, InputEventArgs e)

@@ -8,6 +8,6 @@
 		Name="window1"
         Title="All 15-bit colors" Height="200" Width="300" ResizeMode="NoResize" Loaded="window1_Loaded" MouseDown="image1_Generate" Closing="window1_Closing">
 	<Grid Name="grid1">
-		<Image HorizontalAlignment="Left" Height="128" VerticalAlignment="Top" Width="256" Name="image1"/>
+		<Image HorizontalAlignment="Left" Height="128" VerticalAlignment="Top" Width="256" RenderOptions.BitmapScalingMode="NearestNeighbor" Name="image1"/>
 	</Grid>
 </Window>
