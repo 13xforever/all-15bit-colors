@@ -155,6 +155,46 @@ namespace AllColors
 					return (x: min.x, y: min.y);
 				}
 
+				//this is slower and gives much better results
+				(byte x, byte y) FindBestFitnessWeighted(short color)
+				{
+					if (front.Count == 0)
+						throw new InvalidOperationException("Front is empty");
+
+					if (front.Count == 1)
+						return front.First();
+
+					var distList = new List<(double fitness, byte x, byte y)>(front.Count);
+
+					(int n, double dist) GetFitness((byte x, byte y) checkCoord, (int n, double dist) stat)
+					{
+						if (filled.Contains(checkCoord))
+							return (n: stat.n + 1, dist: Math.Min(stat.dist, LinearDifference(result[checkCoord.y][checkCoord.x], color)));
+						return stat;
+					}
+
+					foreach (var coord in front)
+					{
+						var (x, y) = coord;
+						var stat = (n: 0, dist: double.PositiveInfinity);
+						if (x > 0)
+							stat = GetFitness((x: (byte)(x - 1), y: y), stat);
+						if (x < 255)
+							stat = GetFitness((x: (byte)(x + 1), y: y), stat);
+						if (y > 0)
+							stat = GetFitness((x: x, y: (byte)(y - 1)), stat);
+						if (y < 127)
+							stat = GetFitness((x: x, y: (byte)(y + 1)), stat);
+						if (stat.n == 0)
+							throw new InvalidOperationException("Front is not connected");
+
+						distList.Add((fitness: stat.dist / stat.n, x, y));
+					}
+					var min = distList.OrderBy(f => f.fitness).First();
+					return (x: min.x, y: min.y);
+				}
+
+
 				//create the bitmap with results
 				var bitmap = new WriteableBitmap(256, 128, 96, 96, PixelFormats.Bgr555, null);
 				image1.Source = bitmap;
@@ -181,7 +221,8 @@ namespace AllColors
 				PutPixel(startCoord, randomColors[0]);
 				for (var idx = 1; idx < randomColors.Length; idx++)
 				{
-					PutPixel(FindBestFitness(randomColors[idx]), randomColors[idx]);
+					//PutPixel(FindBestFitness(randomColors[idx]), randomColors[idx]);
+					PutPixel(FindBestFitnessWeighted(randomColors[idx]), randomColors[idx]);
 					if (/*idx % 1000 == 0 &&*/ timer.Elapsed.TotalMilliseconds > 16.66)
 					{
 						Update();
