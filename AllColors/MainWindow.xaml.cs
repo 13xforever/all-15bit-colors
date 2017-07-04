@@ -39,6 +39,23 @@ namespace AllColors
 			var title = window1.Title;
 			if (!Monitor.TryEnter(syncObj))
 				return;
+
+			(byte x, byte y) startCoord;
+			switch (e)
+			{
+				case MouseEventArgs me:
+					var mPos = me.GetPosition(image1);
+					startCoord = (x: (byte)mPos.X, y: (byte)mPos.Y);
+					break;
+				case TouchEventArgs te:
+					var tPos = te.GetTouchPoint(image1);
+					startCoord = (x: (byte)tPos.Position.X, y: (byte)tPos.Position.Y);
+					break;
+				default:
+					startCoord = (x: 128, y: 64);
+					break;
+			}
+
 			try
 			{
 				window1.Title += " (generating...)";
@@ -191,7 +208,7 @@ namespace AllColors
 				//put the first pixel in the center, then fit everything else accordingly
 				var timer = new Stopwatch();
 				timer.Start();
-				PutPixel((128, 64), randomColors[0]);
+				PutPixel(startCoord, randomColors[0]);
 				for (var idx = 1; idx < randomColors.Length; idx++)
 				{
 					PutPixel(FindBestFitness(randomColors[idx]), randomColors[idx]);
