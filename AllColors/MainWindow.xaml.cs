@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Security.Permissions;
 using System.Threading;
@@ -10,7 +9,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using BitStream;
 
 namespace AllColors
 {
@@ -277,33 +275,6 @@ namespace AllColors
 			return Math.Sqrt(sum);
 		}
 
-		private static byte[] Pack(short[][] bitmap)
-		{
-			if (bitmap[0].Length % 16 != 0)
-				throw new InvalidOperationException($"Aliased colors array ({bitmap.Length} is not divisible by 16)");
-
-			var result = new byte[15L * bitmap.Length * bitmap[0].Length / 8];
-			using (var stream = new MemoryStream(result, true))
-			using (var writer = new BitStream.BitStream(stream))
-			{
-				for (var y = 0; y < 128; y++)
-				for (var x = 0; x < 256; x++)
-				{
-					var c = bitmap[y][x];
-					writer.WriteBits((byte)c, Five);
-					c >>= 5;
-					writer.WriteBits((byte)c, Five);
-					c >>= 5;
-					writer.WriteBits((byte)c, Five);
-				}
-				writer.Flush();
-				if (writer.Position != result.Length)
-					throw new InvalidOperationException("Something is fishy in packing");
-			}
-			return result;
-		}
-
-		private static readonly BitNum Five = new BitNum(5);
 		private static readonly object syncObj = new object();
 		private static volatile bool cancel = false;
 
