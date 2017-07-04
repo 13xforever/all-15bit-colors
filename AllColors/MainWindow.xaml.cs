@@ -188,7 +188,7 @@ namespace AllColors
 						if (stat.n == 0)
 							throw new InvalidOperationException("Front is not connected");
 
-						distList.Add((fitness: stat.dist / stat.n, x, y));
+						distList.Add((fitness: stat.dist / coeffs[stat.n], x, y));
 					}
 					var min = distList.OrderBy(f => f.fitness).First();
 					return (x: min.x, y: min.y);
@@ -289,6 +289,7 @@ namespace AllColors
 
 		private static readonly SemaphoreSlim syncObj = new SemaphoreSlim(1, 1);
 		private static volatile bool cancel = false;
+		private static readonly double[] coeffs = new[] {double.NaN, 1.0, Math.Sqrt(2), Math.Sqrt(3), 2.0};
 
 		private void window1_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
