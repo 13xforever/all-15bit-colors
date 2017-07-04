@@ -43,10 +43,12 @@ namespace AllColors
 
 		private void image1_Generate(object sender, InputEventArgs e)
 		{
-			var title = window1.Title;
-			if (!syncObj.Wait(1))
+			cancel = true;
+			if (!syncObj.Wait(0))
 				return;
 
+			var title = window1.Title;
+			cancel = false;
 			(byte x, byte y) startCoord;
 			switch (e)
 			{
@@ -141,13 +143,13 @@ namespace AllColors
 					{
 						var (x, y) = coord;
 						if (x > 0)
-							CheckFitness((x: (byte)(x - 1), y: y), coord);
-						if (x < 255)
-							CheckFitness((x: (byte)(x + 1), y: y), coord);
-						if (y > 0)
-							CheckFitness((x: x, y: (byte)(y - 1)), coord);
-						if (y < 127)
-							CheckFitness((x: x, y: (byte)(y + 1)), coord);
+								CheckFitness((x: (byte)(x - 1), y: y), coord);
+							if (x < 255)
+								CheckFitness((x: (byte)(x + 1), y: y), coord);
+							if (y > 0)
+								CheckFitness((x: x, y: (byte)(y - 1)), coord);
+							if (y < 127)
+								CheckFitness((x: x, y: (byte)(y + 1)), coord);
 					}
 					var min = distList.OrderBy(f => f.fitness).First();
 					return (x: min.x, y: min.y);
