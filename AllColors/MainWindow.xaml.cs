@@ -44,7 +44,7 @@ namespace AllColors
 		private void image1_Generate(object sender, InputEventArgs e)
 		{
 			var title = window1.Title;
-			if (!Monitor.TryEnter(syncObj))
+			if (!syncObj.Wait(1))
 				return;
 
 			(byte x, byte y) startCoord;
@@ -153,45 +153,6 @@ namespace AllColors
 					return (x: min.x, y: min.y);
 				}
 
-				//this is slow and results are not as good
-				(byte x, byte y) FindBestFitnessMedian(short color)
-				{
-					if (front.Count == 0)
-						throw new InvalidOperationException("Front is empty");
-
-					if (front.Count == 1)
-						return front.First();
-
-					var distList = new List<(double fitness, byte x, byte y)>(front.Count * 4);
-
-					(int n, double dist) GetFitness((byte x, byte y) checkCoord, (int n, double dist) stat)
-					{
-						if (filled.Contains(checkCoord))
-							return (n: stat.n + 1, dist: stat.dist + LinearDifference(result[checkCoord.y][checkCoord.x], color));
-						return stat;
-					}
-
-					foreach (var coord in front)
-					{
-						var (x, y) = coord;
-						var stat = (n: 0, dist: 0.0);
-						if (x > 0)
-							stat = GetFitness((x: (byte)(x - 1), y: y), stat);
-						if (x < 255)
-							stat = GetFitness((x: (byte)(x + 1), y: y), stat);
-						if (y > 0)
-							stat = GetFitness((x: x, y: (byte)(y - 1)), stat);
-						if (y < 127)
-							stat = GetFitness((x: x, y: (byte)(y + 1)), stat);
-						if (stat.n == 0)
-							throw new InvalidOperationException("Front is not connected");
-
-						distList.Add((fitness: stat.dist/stat.n, x, y));
-					}
-					var min = distList.OrderBy(f => f.fitness).First();
-					return (x: min.x, y: min.y);
-				}
-
 				//create the bitmap with results
 				var bitmap = new WriteableBitmap(256, 128, 96, 96, PixelFormats.Bgr555, null);
 				image1.Source = bitmap;
@@ -219,7 +180,6 @@ namespace AllColors
 				for (var idx = 1; idx < randomColors.Length; idx++)
 				{
 					PutPixel(FindBestFitness(randomColors[idx]), randomColors[idx]);
-					//PutPixel(FindBestFitnessMedian(randomColors[idx]), randomColors[idx]);
 					if (/*idx % 1000 == 0 &&*/ timer.Elapsed.TotalMilliseconds > 16.66)
 					{
 						Update();
@@ -237,7 +197,7 @@ namespace AllColors
 			finally
 			{
 				window1.Title = title;
-				Monitor.Exit(syncObj);
+				syncObj.Release();
 			}
 		}
 
@@ -284,7 +244,7 @@ namespace AllColors
 			return Math.Sqrt(sum);
 		}
 
-		private static readonly object syncObj = new object();
+		private static readonly SemaphoreSlim syncObj = new SemaphoreSlim(1, 1);
 		private static volatile bool cancel = false;
 
 		private void window1_Closing(object sender, System.ComponentModel.CancelEventArgs e)
