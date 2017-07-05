@@ -41,10 +41,15 @@ namespace AllColors
 			image1.RenderTransform = new ScaleTransform(scaleFactor, scaleFactor);
 
 			var rng = new Random();
+
 			while (!cancel)
 			{
 				image1_Generate(null, null, (byte)rng.Next(256), (byte)rng.Next(128));
-				Thread.Sleep(1000);
+				for (var t = 0; t < 60; t++)
+				{
+					Thread.Sleep(16);
+					DoEvents();
+				}
 			}
 		}
 
