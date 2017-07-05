@@ -39,9 +39,21 @@ namespace AllColors
 			window1.Left = (SystemParameters.FullPrimaryScreenWidth - window1.Width) / 2;
 			window1.Top = (SystemParameters.FullPrimaryScreenHeight - window1.Height) / 2;
 			image1.RenderTransform = new ScaleTransform(scaleFactor, scaleFactor);
+
+			var rng = new Random();
+			while (!cancel)
+			{
+				image1_Generate(null, null, (byte)rng.Next(256), (byte)rng.Next(128));
+				Thread.Sleep(1000);
+			}
 		}
 
 		private void image1_Generate(object sender, InputEventArgs e)
+		{
+			image1_Generate(sender, e, 128, 64);
+		}
+
+		private void image1_Generate(object sender, InputEventArgs e, byte defaultX, byte defaultY)
 		{
 			cancel = true;
 			if (!syncObj.Wait(0))
@@ -61,7 +73,7 @@ namespace AllColors
 					startCoord = (x: (byte)tPos.Position.X, y: (byte)tPos.Position.Y);
 					break;
 				default:
-					startCoord = (x: 128, y: 64);
+					startCoord = (x: defaultX, y: defaultY);
 					break;
 			}
 
@@ -193,7 +205,6 @@ namespace AllColors
 					var min = distList.OrderBy(f => f.fitness).First();
 					return (x: min.x, y: min.y);
 				}
-
 
 				//create the bitmap with results
 				var bitmap = new WriteableBitmap(256, 128, 96, 96, PixelFormats.Bgr555, null);
