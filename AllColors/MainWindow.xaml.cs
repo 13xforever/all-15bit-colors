@@ -88,7 +88,13 @@ namespace AllColors
 				Shuffle(randomColors);
 
 				//optionally sort everything
-				randomColors = randomColors.Select(c => (diff: LinearDifference(randomColors[0], c), c: c)).OrderBy(t => t.diff).Select(t => t.c).ToArray();
+				randomColors = randomColors.Take(startCoords.Count)
+					.Concat(randomColors
+						.Skip(startCoords.Count)
+						.Select(c => (diff: LinearDifference(randomColors[startCoords.Count - 1], c), c: c))
+						.OrderBy(t => t.diff)
+						.Select(t => t.c))
+					.ToArray();
 
 				//next we put the pixels one by one where they fit best (by cortesian coordinates in the color space)
 				var result = new short[128][];
