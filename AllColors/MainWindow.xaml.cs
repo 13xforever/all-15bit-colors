@@ -40,11 +40,9 @@ namespace AllColors
 			window1.Top = (SystemParameters.FullPrimaryScreenHeight - window1.Height) / 2;
 			image1.RenderTransform = new ScaleTransform(scaleFactor, scaleFactor);
 
-			var rng = new Random();
-
 			while (!cancel)
 			{
-				image1_Generate(null, null, (byte)rng.Next(256), (byte)rng.Next(128));
+				image1_Generate(null, null);
 				for (var t = 0; t < 60; t++)
 				{
 					Thread.Sleep(16);
@@ -55,30 +53,26 @@ namespace AllColors
 
 		private void image1_Generate(object sender, InputEventArgs e)
 		{
-			image1_Generate(sender, e, 128, 64);
-		}
-
-		private void image1_Generate(object sender, InputEventArgs e, byte defaultX, byte defaultY)
-		{
 			cancel = true;
 			if (!syncObj.Wait(0))
 				return;
 
 			var title = window1.Title;
 			cancel = false;
-			(byte x, byte y) startCoord;
+			List<(byte x, byte y)> startCoords = new List<(byte x, byte y)>();
 			switch (e)
 			{
 				case MouseEventArgs me:
 					var mPos = me.GetPosition(image1);
-					startCoord = (x: (byte)mPos.X, y: (byte)mPos.Y);
+					startCoords.Add((x: (byte)mPos.X, y: (byte)mPos.Y));
 					break;
 				case TouchEventArgs te:
 					var tPos = te.GetTouchPoint(image1);
-					startCoord = (x: (byte)tPos.Position.X, y: (byte)tPos.Position.Y);
+					startCoords.Add((x: (byte)tPos.Position.X, y: (byte)tPos.Position.Y));
 					break;
 				default:
-					startCoord = (x: defaultX, y: defaultY);
+					for (var n = rng.Next(9) + 1; n > 0; n--)
+						startCoords.Add((x: (byte)rng.Next(256), y: (byte)rng.Next(128)));
 					break;
 			}
 
@@ -234,8 +228,12 @@ namespace AllColors
 				//put the first pixel in the center, then fit everything else accordingly
 				var timer = new Stopwatch();
 				timer.Start();
-				PutPixel(startCoord, randomColors[0]);
-				for (var idx = 1; idx < randomColors.Length; idx++)
+				for (var i = 0; i < startCoords.Count; i++)
+					PutPixel(startCoords[i], randomColors[i]);
+				Update();
+				DoEvents();
+
+				for (var idx = startCoords.Count; idx < randomColors.Length; idx++)
 				{
 					//PutPixel(FindBestFitness(randomColors[idx]), randomColors[idx]);
 					PutPixel(FindBestFitnessWeighted(randomColors[idx]), randomColors[idx]);
@@ -306,6 +304,7 @@ namespace AllColors
 		private static readonly SemaphoreSlim syncObj = new SemaphoreSlim(1, 1);
 		private static volatile bool cancel = false;
 		private static readonly double[] coeffs = new[] {double.NaN, 1.0, Math.Sqrt(2), Math.Sqrt(3), 2.0};
+		private static readonly Random rng = new Random();
 
 		private void window1_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
