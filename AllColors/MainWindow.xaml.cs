@@ -71,7 +71,7 @@ namespace AllColors
 					startCoords.Add((x: (byte)tPos.Position.X, y: (byte)tPos.Position.Y));
 					break;
 				default:
-					for (var n = rng.Next(9) + 1; n > 0; n--)
+					for (var n = rng.Next(4) + 1; n > 0; n--)
 						startCoords.Add((x: (byte)rng.Next(256), y: (byte)rng.Next(128)));
 					break;
 			}
@@ -94,6 +94,30 @@ namespace AllColors
 						.OrderBy(t => t.diff)
 						.Select(t => t.c)
 						.ToArray();
+				else
+				{
+					var n = startCoords.Count;
+					var buckets = new List<short>[n];
+					for (var i = 0; i < n; i++)
+						buckets[i] = new List<short>(uniqueColors / n + 1) {randomColors[i]};
+					for (var i = n; i < uniqueColors; i++)
+					{
+						var minBucketRank = buckets.Min(l => l.Count);
+						var qualifiedBuckets = buckets.Where(l => l.Count == minBucketRank).ToList();
+						var selectedBucket = qualifiedBuckets.Select(b => (diff: LinearDifference(randomColors[i], b[0]), b: b)).OrderBy(t => t.diff).Select(t => t.b).First();
+						selectedBucket.Add(randomColors[i]);
+					}
+					var maxBucketRank = buckets.Max(l => l.Count);
+					var zip = new List<short>();
+					for (var i = 0; i < maxBucketRank; i++)
+					for (var j = 0; j < n; j++)
+						if (i < buckets[j].Count)
+							zip.Add(buckets[j][i]);
+					if (zip.Count != randomColors.Length)
+						throw new InvalidOperationException("Looks like you screwed up the zipping");
+
+					randomColors = zip.ToArray();
+				}
 
 				//next we put the pixels one by one where they fit best (by cortesian coordinates in the color space)
 				var result = new short[128][];
