@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Security.Permissions;
 using System.Threading;
 using System.Windows;
@@ -9,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Vector = System.Windows.Vector;
 
 namespace AllColors
 {
@@ -82,9 +84,9 @@ namespace AllColors
 
 				//generate all unique colors, then shuffle them randomly
 				const int uniqueColors = 0b1_00000_00000_00000;
-				var randomColors = new short[uniqueColors];
+				var randomColors = new Vector3[uniqueColors];
 				for (int i = 0; i < uniqueColors; i++)
-					randomColors[i] = (short)i;
+					randomColors[i] = ((short)i).Unpack();
 				Shuffle(randomColors);
 
 				//optionally sort everything
@@ -97,9 +99,9 @@ namespace AllColors
 				else
 				{
 					var n = startCoords.Count;
-					var buckets = new List<short>[n];
+					var buckets = new List<Vector3>[n];
 					for (var i = 0; i < n; i++)
-						buckets[i] = new List<short>(uniqueColors / n + 1) {randomColors[i]};
+						buckets[i] = new List<Vector3>(uniqueColors / n + 1) {randomColors[i]};
 					for (var i = n; i < uniqueColors; i++)
 					{
 						var minBucketRank = buckets.Min(l => l.Count);
@@ -108,7 +110,7 @@ namespace AllColors
 						selectedBucket.Add(randomColors[i]);
 					}
 					var maxBucketRank = buckets.Max(l => l.Count);
-					var zip = new List<short>();
+					var zip = new List<Vector3>();
 					for (var i = 0; i < maxBucketRank; i++)
 					for (var j = 0; j < n; j++)
 						if (i < buckets[j].Count)
@@ -121,19 +123,25 @@ namespace AllColors
 
 				//next we put the pixels one by one where they fit best (by cortesian coordinates in the color space)
 				var result = new short[128][];
+				var resultVec = new Vector3[128][];
 				for (var y = 0; y < 128; y++)
 				{
 					result[y] = new short[256];
+					resultVec[y] = new Vector3[256];
 					for (var x = 0; x < 256; x++)
-						result[y][x] = 0b0_11111_11111_11111;
+					{
+						result[y][x] = 0b11111_11111_11111;
+						resultVec[y][x] = Black;
+}
 				}
 				var filled = new HashSet<(byte x, byte y)>();
 				var front = new HashSet<(byte x, byte y)>();
 
-				void PutPixel((byte x, byte y) coord, short color)
+				void PutPixel((byte x, byte y) coord, Vector3 color)
 				{
 					var (x, y) = coord;
-					result[y][x] = color;
+					result[y][x] = color.Pack();
+					resultVec[y][x] = color;
 					filled.Add(coord);
 					front.Remove(coord);
 					if (x > 0)
@@ -161,6 +169,7 @@ namespace AllColors
 							front.Add(newCoord);
 					}
 				}
+/*
 
 				//this is fast and works fine
 				(byte x, byte y) FindBestFitness(short color)
@@ -171,7 +180,7 @@ namespace AllColors
 					if (front.Count == 1)
 						return front.First();
 
-					var distList = new List<(double fitness, byte x, byte y)>(front.Count * 4);
+					var distList = new List<(float fitness, byte x, byte y)>(front.Count * 4);
 
 					void CheckFitness((byte x, byte y) checkCoord, (byte x, byte y) frontCoord)
 					{
@@ -194,9 +203,10 @@ namespace AllColors
 					var min = distList.OrderBy(f => f.fitness).First();
 					return (x: min.x, y: min.y);
 				}
+*/
 
 				//this is slower and gives much better results
-				(byte x, byte y) FindBestFitnessWeighted(short color)
+				(byte x, byte y) FindBestFitnessWeighted(Vector3 color)
 				{
 					if (front.Count == 0)
 						throw new InvalidOperationException("Front is empty");
@@ -204,19 +214,19 @@ namespace AllColors
 					if (front.Count == 1)
 						return front.First();
 
-					var distList = new List<(double fitness, byte x, byte y)>(front.Count);
+					var distList = new List<(float fitness, byte x, byte y)>(front.Count);
 
-					(int n, double dist) GetFitness((byte x, byte y) checkCoord, (int n, double dist) stat)
+					(int n, float dist) GetFitness((byte x, byte y) checkCoord, (int n, float dist) stat)
 					{
 						if (filled.Contains(checkCoord))
-							return (n: stat.n + 1, dist: Math.Min(stat.dist, LinearDifference(result[checkCoord.y][checkCoord.x], color)));
+							return (n: stat.n + 1, dist: Math.Min(stat.dist, LinearDifference(resultVec[checkCoord.y][checkCoord.x], color)));
 						return stat;
 					}
 
 					foreach (var coord in front)
 					{
 						var (x, y) = coord;
-						var stat = (n: 0, dist: double.PositiveInfinity);
+						var stat = (n: 0, dist: float.PositiveInfinity);
 						if (x > 0)
 							stat = GetFitness((x: (byte)(x - 1), y: y), stat);
 						if (x < 255)
@@ -318,22 +328,16 @@ namespace AllColors
 			}
 		}
 
-		private static double LinearDifference(short rgb555_1, short rgb555_2)
+		private static float LinearDifference(Vector3 vec1, Vector3 vec2)
 		{
-			var sum = 0.0;
-			for (var i = 0; i < 3; i++)
-			{
-				sum += Math.Pow((rgb555_1 & 0b11111) - (rgb555_2 & 0b11111), 2.0);
-				rgb555_1 >>= 5;
-				rgb555_2 >>= 5;
-			}
-			return Math.Sqrt(sum);
+			return Vector3.Distance(vec1, vec2);
 		}
 
 		private static readonly SemaphoreSlim syncObj = new SemaphoreSlim(1, 1);
-		private static volatile bool cancel = false;
-		private static readonly double[] coeffs = new[] {double.NaN, 1.0, Math.Sqrt(2), Math.Sqrt(3), 2.0};
+		private static volatile bool cancel;
+		private static readonly float[] coeffs = {float.NaN, 1.0f, (float)Math.Sqrt(2), (float)Math.Sqrt(3), 2.0f};
 		private static readonly Random rng = new Random();
+		private static readonly Vector3 Black = Vector3Ex.Unpack(0b0_11111_11111_11111);
 
 		private void window1_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
