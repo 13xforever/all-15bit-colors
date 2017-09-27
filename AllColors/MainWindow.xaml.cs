@@ -71,7 +71,7 @@ namespace AllColors
 					startCoords.Add((x: (byte)tPos.Position.X, y: (byte)tPos.Position.Y));
 					break;
 				default:
-					for (var n = rng.Next(4) + 1; n > 0; n--)
+					//for (var n = rng.Next(4) + 1; n > 0; n--)
 						startCoords.Add((x: (byte)rng.Next(256), y: (byte)rng.Next(128)));
 					break;
 			}
@@ -266,7 +266,7 @@ namespace AllColors
 				{
 					//PutPixel(FindBestFitness(randomColors[idx]), randomColors[idx]);
 					PutPixel(FindBestFitnessWeighted(randomColors[idx]), randomColors[idx]);
-					if (/*idx % 1000 == 0 &&*/ timer.Elapsed.TotalMilliseconds > 16.66)
+					if (/*idx % 1000 == 0 &&*/ timer.Elapsed.TotalMilliseconds >= 1000.0/60.0)
 					{
 						Update();
 						window1.Title = $"{title} ({100.0 * idx / randomColors.Length:0.00}%)";
