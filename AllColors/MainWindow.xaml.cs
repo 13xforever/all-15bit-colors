@@ -10,7 +10,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Vector = System.Windows.Vector;
 
 namespace AllColors
 {
@@ -73,7 +72,9 @@ namespace AllColors
 					startCoords.Add((x: (byte)tPos.Position.X, y: (byte)tPos.Position.Y));
 					break;
 				default:
-					//for (var n = rng.Next(4) + 1; n > 0; n--)
+#if MULTIPOINT
+					for (var n = rng.Next(4) + 1; n > 0; n--)
+#endif
 						startCoords.Add((x: (byte)rng.Next(256), y: (byte)rng.Next(128)));
 					break;
 			}
@@ -92,6 +93,7 @@ namespace AllColors
 				//optionally sort everything
 				if (startCoords.Count == 1)
 					randomColors = randomColors
+						//.AsParallel()
 						.Select(c => (diff: LinearDifference(randomColors[0], c), c: c))
 						.OrderBy(t => t.diff)
 						.Select(t => t.c)
@@ -106,7 +108,12 @@ namespace AllColors
 					{
 						var minBucketRank = buckets.Min(l => l.Count);
 						var qualifiedBuckets = buckets.Where(l => l.Count == minBucketRank).ToList();
-						var selectedBucket = qualifiedBuckets.Select(b => (diff: LinearDifference(randomColors[i], b[0]), b: b)).OrderBy(t => t.diff).Select(t => t.b).First();
+						var selectedBucket = qualifiedBuckets
+							//.AsParallel()
+							.Select(b => (diff: LinearDifference(randomColors[i], b[0]), b: b))
+							.OrderBy(t => t.diff)
+							.Select(t => t.b)
+							.First();
 						selectedBucket.Add(randomColors[i]);
 					}
 					var maxBucketRank = buckets.Max(l => l.Count);
@@ -169,10 +176,10 @@ namespace AllColors
 							front.Add(newCoord);
 					}
 				}
-/*
+
 
 				//this is fast and works fine
-				(byte x, byte y) FindBestFitness(short color)
+				(byte x, byte y) FindBestFitness(Vector3 color)
 				{
 					if (front.Count == 0)
 						throw new InvalidOperationException("Front is empty");
@@ -185,7 +192,7 @@ namespace AllColors
 					void CheckFitness((byte x, byte y) checkCoord, (byte x, byte y) frontCoord)
 					{
 						if (filled.Contains(checkCoord))
-							distList.Add((LinearDifference(result[checkCoord.y][checkCoord.x], color), frontCoord.x, frontCoord.y));
+							distList.Add((LinearDifference(resultVec[checkCoord.y][checkCoord.x], color), frontCoord.x, frontCoord.y));
 					}
 
 					foreach (var coord in front)
@@ -203,7 +210,7 @@ namespace AllColors
 					var min = distList.OrderBy(f => f.fitness).First();
 					return (x: min.x, y: min.y);
 				}
-*/
+
 
 				//this is slower and gives much better results
 				(byte x, byte y) FindBestFitnessWeighted(Vector3 color)
@@ -223,24 +230,27 @@ namespace AllColors
 						return stat;
 					}
 
-					foreach (var coord in front)
-					{
-						var (x, y) = coord;
-						var stat = (n: 0, dist: float.PositiveInfinity);
-						if (x > 0)
-							stat = GetFitness((x: (byte)(x - 1), y: y), stat);
-						if (x < 255)
-							stat = GetFitness((x: (byte)(x + 1), y: y), stat);
-						if (y > 0)
-							stat = GetFitness((x: x, y: (byte)(y - 1)), stat);
-						if (y < 127)
-							stat = GetFitness((x: x, y: (byte)(y + 1)), stat);
-						if (stat.n == 0)
-							throw new InvalidOperationException("Front is not connected");
+					var min = front
+						//.AsParallel()
+						.Select(coord =>
+						{
+							var (x, y) = coord;
+							var stat = (n: 0, dist: float.PositiveInfinity);
+							if (x > 0)
+								stat = GetFitness((x: (byte)(x - 1), y: y), stat);
+							if (x < 255)
+								stat = GetFitness((x: (byte)(x + 1), y: y), stat);
+							if (y > 0)
+								stat = GetFitness((x: x, y: (byte)(y - 1)), stat);
+							if (y < 127)
+								stat = GetFitness((x: x, y: (byte)(y + 1)), stat);
+							if (stat.n == 0)
+								throw new InvalidOperationException("Front is not connected");
 
-						distList.Add((fitness: stat.dist / coeffs[stat.n], x, y));
-					}
-					var min = distList.OrderBy(f => f.fitness).First();
+							return (fitness: stat.dist / coeffs[stat.n], x: x, y: y);
+						})
+						.OrderBy(f => f.fitness)
+						.First();
 					return (x: min.x, y: min.y);
 				}
 
