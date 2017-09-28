@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AllColors", "AllColors\AllC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AllColors.Tests", "AllColors.Tests\AllColors.Tests.csproj", "{668BB793-9F68-4F24-B051-294AE63FAD3E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "Benchmarks\Benchmarks.csproj", "{F7CE18FE-680B-4EDE-801C-6A9E6A437510}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,12 @@ Global
 		{668BB793-9F68-4F24-B051-294AE63FAD3E}.Multipoint|Any CPU.Build.0 = Release|Any CPU
 		{668BB793-9F68-4F24-B051-294AE63FAD3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{668BB793-9F68-4F24-B051-294AE63FAD3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7CE18FE-680B-4EDE-801C-6A9E6A437510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7CE18FE-680B-4EDE-801C-6A9E6A437510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7CE18FE-680B-4EDE-801C-6A9E6A437510}.Multipoint|Any CPU.ActiveCfg = Release|Any CPU
+		{F7CE18FE-680B-4EDE-801C-6A9E6A437510}.Multipoint|Any CPU.Build.0 = Release|Any CPU
+		{F7CE18FE-680B-4EDE-801C-6A9E6A437510}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7CE18FE-680B-4EDE-801C-6A9E6A437510}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
