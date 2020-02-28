@@ -2,7 +2,6 @@
 using System.Numerics;
 using AllColors;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Attributes.Jobs;
 using BenchmarkDotNet.Running;
 
 namespace Benchmarks
