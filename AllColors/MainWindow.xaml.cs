@@ -60,7 +60,7 @@ namespace AllColors
 
 			var title = window1.Title;
 			cancel = false;
-			List<(byte x, byte y)> startCoords = new List<(byte x, byte y)>();
+			var startCoords = new List<(byte x, byte y)>();
 			switch (e)
 			{
 				case MouseEventArgs me:
@@ -221,8 +221,6 @@ namespace AllColors
 					if (front.Count == 1)
 						return front.First();
 
-					var distList = new List<(float fitness, byte x, byte y)>(front.Count);
-
 					(int n, float dist) GetFitness((byte x, byte y) checkCoord, (int n, float dist) stat)
 					{
 						if (filled.Contains(checkCoord))
@@ -275,8 +273,9 @@ namespace AllColors
 				}
 
 				//put the first pixel in the center, then fit everything else accordingly
-				var timer = new Stopwatch();
-				timer.Start();
+				var targetFps = 60.0;
+				var targetFrameTime = 1000.0 / targetFps;
+				var timer = Stopwatch.StartNew();
 				for (var i = 0; i < startCoords.Count; i++)
 					PutPixel(startCoords[i], randomColors[i]);
 				Update();
@@ -286,14 +285,15 @@ namespace AllColors
 				{
 					//PutPixel(FindBestFitness(randomColors[idx]), randomColors[idx]);
 					PutPixel(FindBestFitnessWeighted(randomColors[idx]), randomColors[idx]);
-					if (/*idx % 1000 == 0 &&*/ timer.Elapsed.TotalMilliseconds >= 1000.0/60.0)
+					if (timer.Elapsed.TotalMilliseconds >= targetFrameTime)
 					{
+						timer.Restart();
 						Update();
 						window1.Title = $"{title} ({100.0 * idx / randomColors.Length:0.00}%)";
-						DoEvents();
 						if (cancel)
 							break;
-						timer.Restart();
+						DoEvents();
+
 					}
 				}
 				timer.Reset();
@@ -310,16 +310,14 @@ namespace AllColors
 		[SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)]
 		public void DoEvents()
 		{
-			DispatcherFrame frame = new DispatcherFrame();
-			Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background,
-				new DispatcherOperationCallback(ExitFrame), frame);
+			var frame = new DispatcherFrame();
+			Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Background, new DispatcherOperationCallback(ExitFrame), frame);
 			Dispatcher.PushFrame(frame);
 		}
 
 		public object ExitFrame(object f)
 		{
 			((DispatcherFrame)f).Continue = false;
-
 			return null;
 		}
 
