@@ -179,6 +179,7 @@ public partial class MainWindow : Window
 			}
 
 			//this is fast and works fine
+			/*
 			(byte x, byte y) FindBestFitness(Vector3 color)
 			{
 				if (front.Count == 0)
@@ -210,6 +211,7 @@ public partial class MainWindow : Window
 				var min = distList.MinBy(f => f.fitness);
 				return (x: min.x, y: min.y);
 			}
+			*/
 
 			//this is slower and gives much better results
 			(byte x, byte y) FindBestFitnessWeighted(Vector3 color, HashSet<(byte, byte)> front)
