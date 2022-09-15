@@ -6,16 +6,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace AllColors
+namespace AllColors;
+
+/// <summary>
+/// Interaction logic for App.xaml
+/// </summary>
+public partial class App : Application
 {
-	/// <summary>
-	/// Interaction logic for App.xaml
-	/// </summary>
-	public partial class App : Application
+	public App()
 	{
-		public App()
-		{
-			this.InitializeComponent();
-		}
+		this.InitializeComponent();
 	}
 }
