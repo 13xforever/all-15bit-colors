@@ -64,9 +64,7 @@ public class Program
 	}
 
 	private static float LinearDifference(Vector3 vec1, Vector3 vec2)
-	{
-		return Vector3.Distance(vec1, vec2);
-	}
+		=> Vector3.Distance(vec1, vec2);
 
 	private static double LinearDifference(short rgb555_1, short rgb555_2)
 	{

@@ -178,7 +178,6 @@ public partial class MainWindow : Window
 				}
 			}
 
-
 			//this is fast and works fine
 			(byte x, byte y) FindBestFitness(Vector3 color)
 			{
@@ -212,9 +211,8 @@ public partial class MainWindow : Window
 				return (x: min.x, y: min.y);
 			}
 
-
 			//this is slower and gives much better results
-			(byte x, byte y) FindBestFitnessWeighted(Vector3 color)
+			(byte x, byte y) FindBestFitnessWeighted(Vector3 color, HashSet<(byte, byte)> front)
 			{
 				if (front.Count == 0)
 					throw new InvalidOperationException("Front is empty");
@@ -229,26 +227,32 @@ public partial class MainWindow : Window
 					return stat;
 				}
 
-				var min = front
-					//.AsParallel()
-					.Select(coord =>
-					{
-						var (x, y) = coord;
-						var stat = (n: 0, dist: float.PositiveInfinity);
-						if (x > 0)
-							stat = GetFitness((x: (byte)(x - 1), y: y), stat);
-						if (x < 255)
-							stat = GetFitness((x: (byte)(x + 1), y: y), stat);
-						if (y > 0)
-							stat = GetFitness((x: x, y: (byte)(y - 1)), stat);
-						if (y < 127)
-							stat = GetFitness((x: x, y: (byte)(y + 1)), stat);
-						if (stat.n == 0)
-							throw new InvalidOperationException("Front is not connected");
+				(float fitness, byte x, byte y) weightFun((byte, byte) coord)
+				{
+					var (x, y) = coord;
+					var stat = (n: 0, dist: float.PositiveInfinity);
+					if (x > 0)
+						stat = GetFitness((x: (byte)(x - 1), y: y), stat);
+					if (x < 255)
+						stat = GetFitness((x: (byte)(x + 1), y: y), stat);
+					if (y > 0)
+						stat = GetFitness((x: x, y: (byte)(y - 1)), stat);
+					if (y < 127)
+						stat = GetFitness((x: x, y: (byte)(y + 1)), stat);
+					if (stat.n == 0)
+						throw new InvalidOperationException("Front is not connected");
 
-						return (fitness: stat.dist / coeffs[stat.n], x: x, y: y);
-					})
-					.MinBy(f => f.fitness);
+					return (fitness: stat.dist / coeffs[stat.n], x: x, y: y);
+
+				}
+
+				var min = (fitness: float.MaxValue, x: (byte)0, y: (byte)0);
+				foreach (var coord in front)
+				{
+					var w = weightFun(coord);
+					if (w.fitness < min.fitness)
+						min = w;
+				}
 				return (x: min.x, y: min.y);
 			}
 
@@ -284,7 +288,7 @@ public partial class MainWindow : Window
 			for (var idx = startCoords.Count; idx < randomColors.Length; idx++)
 			{
 				//PutPixel(FindBestFitness(randomColors[idx]), randomColors[idx]);
-				PutPixel(FindBestFitnessWeighted(randomColors[idx]), randomColors[idx]);
+				PutPixel(FindBestFitnessWeighted(randomColors[idx], front), randomColors[idx]);
 				if (timer.Elapsed.TotalMilliseconds >= targetFrameTime)
 				{
 					timer.Restart();
