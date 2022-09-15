@@ -11,8 +11,8 @@ namespace Benchmarks;
 public class Program
 {
 	private const int ColorCount = 0b1_00000_00000_00000;
-	private short[] colors = new short[ColorCount];
-	private Vector3[] colorsVec = new Vector3[ColorCount];
+	private readonly short[] colors = new short[ColorCount];
+	private readonly Vector3[] colorsVec = new Vector3[ColorCount];
 
 	public Program()
 	{

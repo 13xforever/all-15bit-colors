@@ -58,6 +58,7 @@ public partial class MainWindow : Window
 		if (!syncObj.Wait(0))
 			return;
 
+		var rng = new Random();
 		var title = window1.Title;
 		cancel = false;
 		var startCoords = new List<(byte x, byte y)>();
@@ -86,7 +87,7 @@ public partial class MainWindow : Window
 			//generate all unique colors, then shuffle them randomly
 			const int uniqueColors = 0b1_00000_00000_00000;
 			var randomColors = new Vector3[uniqueColors];
-			for (int i = 0; i < uniqueColors; i++)
+			for (var i = 0; i < uniqueColors; i++)
 				randomColors[i] = ((short)i).Unpack();
 			Shuffle(randomColors);
 
@@ -103,7 +104,7 @@ public partial class MainWindow : Window
 				var n = startCoords.Count;
 				var buckets = new List<Vector3>[n];
 				for (var i = 0; i < n; i++)
-					buckets[i] = new List<Vector3>(uniqueColors / n + 1) {randomColors[i]};
+					buckets[i] = new(uniqueColors / n + 1) {randomColors[i]};
 				for (var i = n; i < uniqueColors; i++)
 				{
 					var minBucketRank = buckets.Min(l => l.Count);
@@ -207,7 +208,7 @@ public partial class MainWindow : Window
 					if (y < 127)
 						CheckFitness((x: x, y: (byte)(y + 1)), coord);
 				}
-				var min = distList.OrderBy(f => f.fitness).First();
+				var min = distList.MinBy(f => f.fitness);
 				return (x: min.x, y: min.y);
 			}
 
@@ -247,8 +248,7 @@ public partial class MainWindow : Window
 
 						return (fitness: stat.dist / coeffs[stat.n], x: x, y: y);
 					})
-					.OrderBy(f => f.fitness)
-					.First();
+					.MinBy(f => f.fitness);
 				return (x: min.x, y: min.y);
 			}
 
@@ -268,7 +268,7 @@ public partial class MainWindow : Window
 							Buffer.MemoryCopy(pRow, backBufferRow, (ulong)bitmap.BackBufferStride, (ulong)(result[y].Length * sizeof(short)));
 						}
 				}
-				bitmap.AddDirtyRect(new Int32Rect(0, 0, 256, 128));
+				bitmap.AddDirtyRect(new(0, 0, 256, 128));
 				bitmap.Unlock();
 			}
 
@@ -330,25 +330,17 @@ public partial class MainWindow : Window
 			if (idx == i)
 				continue;
 
-			var tmp = array[i];
-			array[i] = array[idx];
-			array[idx] = tmp;
+			(array[i], array[idx]) = (array[idx], array[i]);
 		}
 	}
 
 	private static float LinearDifference(Vector3 vec1, Vector3 vec2)
-	{
-		return Vector3.Distance(vec1, vec2);
-	}
+		=> Vector3.Distance(vec1, vec2);
 
-	private static readonly SemaphoreSlim syncObj = new SemaphoreSlim(1, 1);
+	private static readonly SemaphoreSlim syncObj = new(1, 1);
 	private static volatile bool cancel;
 	private static readonly float[] coeffs = {float.NaN, 1.0f, (float)Math.Sqrt(2), (float)Math.Sqrt(3), 2.0f};
-	private static readonly Random rng = new Random();
 	private static readonly Vector3 Black = Vector3Ex.Unpack(0b0_11111_11111_11111);
 
-	private void window1_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-	{
-		cancel = true;
-	}
+	private void window1_Closing(object sender, System.ComponentModel.CancelEventArgs e) => cancel = true;
 }

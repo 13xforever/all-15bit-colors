@@ -5,9 +5,7 @@ namespace AllColors;
 public static class Vector3Ex
 {
 	public static Vector3 Unpack(this short rgb555)
-	{
-		return new Vector3(rgb555 & 0b11111, (rgb555 >> 5) & 0b11111, (rgb555 >> 10) & 0b11111);
-	}
+		=> new(rgb555 & 0b11111, (rgb555 >> 5) & 0b11111, (rgb555 >> 10) & 0b11111);
 
 	public static short Pack(this Vector3 vector)
 	{
